@@ -46,6 +46,18 @@ awesome_instance.save(function (err) {
 - Think of them as running functions on a documents data to extract specific information generated from the documents data.
 - Virtual properties are document properties that you can get and set but that do not get persisted to MongoDB. The getters are useful for formatting or combining fields, while setters are useful for de-composing a single value into multiple values for storage.
 
+### MVC Architecture
+
+- M: Models
+  - Document data that represents some sort of information.
+  - If you were to request bank information, the model would be a document that contains bank balances, payment dates, types of accounts, user information.
+  - Different models would represent different types of information based on the application.
+- V: Views
+  - Basically the layout, or HTML file structured in a way to display specific data.
+  - You would have different views for home page, products page, product page, etc..
+- C: Controllers
+  - Basically will determine based on user requests, which models to access and which views to use to display data, then send to the user as a response.
+
 #### Credentials
 
 username: rcamach7
