@@ -1,4 +1,4 @@
-const mongoose = require('mongoose');
+const mongoose = require("mongoose");
 const Schema = mongoose.Schema;
 
 // ! Defines the structure of author documents.
@@ -10,17 +10,17 @@ const AuthorSchema = new Schema({
 });
 
 // // * Return authors full name
-AuthorSchema.virtual('name').get(function () {
-  return this.family_name + ', ' + this.first_name;
+AuthorSchema.virtual("name").get(function () {
+  return this.family_name + ", " + this.first_name;
 });
 
 // * Authors lifespan
-AuthorSchema.virtual('lifespan').get(() => {
-  let lifetime = '';
+AuthorSchema.virtual("lifespan").get(() => {
+  let lifetime = "";
   if (this.date_of_birth) {
     lifetime = this.date_of_birth.getYear().toString();
   }
-  lifetime += ' - ';
+  lifetime += " - ";
   if (this.date_of_death) {
     lifetime += this.date_of_death.getYear();
   }
@@ -29,9 +29,9 @@ AuthorSchema.virtual('lifespan').get(() => {
 });
 
 // * Return author URL
-AuthorSchema.virtual('url').get(() => {
-  return '/catalog/author/' + this._id;
+AuthorSchema.virtual("url").get(function () {
+  return "/catalog/author/" + this._id;
 });
 
 // ! Export Model
-module.exports = mongoose.model('Author', AuthorSchema);
+module.exports = mongoose.model("Author", AuthorSchema);
