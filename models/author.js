@@ -10,14 +10,9 @@ const AuthorSchema = new Schema({
 });
 
 // // * Return authors full name
-AuthorSchema.virtual('name').get(() => {
-  const x = this;
+AuthorSchema.virtual('name').get(function () {
   return this.family_name + ', ' + this.first_name;
 });
-// Virtual for author "full" name.
-// AuthorSchema.virtual('name').get(function () {
-//   return this.family_name + ', ' + this.first_name;
-// });
 
 // * Authors lifespan
 AuthorSchema.virtual('lifespan').get(() => {
