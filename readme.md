@@ -58,6 +58,8 @@ awesome_instance.save(function (err) {
 - C: Controllers
   - Basically will determine based on user requests, which models to access and which views to use to display data, then send to the user as a response.
 
+### Asynchronous flow
+
 #### Credentials
 
 username: rcamach7
