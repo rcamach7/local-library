@@ -1,4 +1,5 @@
 var Genre = require('../models/genre');
+const { body, validationResult } = require('express-validator');
 
 // Display list of all Genre.
 exports.genre_list = function (req, res, next) {
@@ -16,13 +17,48 @@ exports.genre_detail = function (req, res) {
 
 // Display Genre create form on GET.
 exports.genre_create_get = function (req, res) {
-  res.send('NOT IMPLEMENTED: Genre create GET');
+  res.render('genre_form', { title: 'Create Genre' });
 };
 
-// Handle Genre create on POST.
-exports.genre_create_post = function (req, res) {
-  res.send('NOT IMPLEMENTED: Genre create POST');
-};
+// * Instead of being a single middleware function the controller specifies an array of middleware functions.
+// Handle Genre create on POST
+exports.genre_create_post = [
+  // Validate nd sanitize the name field
+  body('name', 'Genre name required').trim().isLength({ min: 1 }).escape(),
+  // Once validation passes, process post request
+  (req, res, next) => {
+    // Extract validation errors
+    const errors = validationResult(req);
+
+    // Create a genre object with sanitized data
+    const genre = new Genre({ name: req.body.name });
+
+    // If errors existed in the validation, return data. If not, process data.
+    if (!errors.isEmpty()) {
+      res.render('genre_form', {
+        title: 'Create Genre',
+        genre: genre,
+        errors: errors.array(),
+      });
+      return;
+    } else {
+      // First check if genre already exists.
+      Genre.findOne({ name: req.body.name }).exec((err, found_genre) => {
+        if (err) next(err);
+
+        // Genre Exists, redirect to it's page. If not, process data.
+        if (found_genre) {
+          res.redirect(found_genre.url);
+        } else {
+          genre.save((err) => {
+            if (err) next(err);
+            res.redirect(genre.url);
+          });
+        }
+      });
+    }
+  },
+];
 
 // Display Genre delete form on GET.
 exports.genre_delete_get = function (req, res) {
