@@ -171,13 +171,70 @@ exports.book_create_post = [
 ];
 
 // Display book delete form on GET.
-exports.book_delete_get = (req, res) => {
-  res.send('Not implemented');
+exports.book_delete_get = (req, res, next) => {
+  async.parallel(
+    {
+      book: (callback) =>
+        Book.findById(req.params.id)
+          .populate('author')
+          .populate('genre')
+          .exec(callback),
+      book_instances: (callback) =>
+        BookInstance.find({ book: req.params.id })
+          .populate('book')
+          .exec(callback),
+    },
+    (err, results) => {
+      if (err) next(err);
+
+      if (!results.book_instances === null) {
+        // No book found
+        res.redirect('/catalog/books');
+      }
+
+      res.render('book_delete', {
+        title: 'Delete Book',
+        book: results.book,
+        book_instances: results.book_instances,
+      });
+    }
+  );
 };
 
 // Handle book delete on POST.
 exports.book_delete_post = (req, res, next) => {
-  res.send('NOT IMPLEMENTED: Book delete POST');
+  async.parallel(
+    {
+      book: (callback) =>
+        Book.findById(req.params.id)
+          .populate('author')
+          .populate('genre')
+          .exec(callback),
+      book_instances: (callback) =>
+        BookInstance.find({ book: req.params.id })
+          .populate('book')
+          .exec(callback),
+    },
+    (err, results) => {
+      if (err) next(err);
+
+      if (results.book_instances > 0) {
+        // User must delete all book instances before deleting book
+        res.render('book_delete', {
+          title: 'Delete Book',
+          book: results.book,
+          book_instances: results.book_instances,
+        });
+        return;
+      } else {
+        Book.findByIdAndDelete(req.body.bookid, (err) => {
+          if (err) next(err);
+
+          res.redirect('/catalog/books');
+        });
+      }
+    }
+  );
 };
 
 // Display book update form on GET.
@@ -208,7 +265,6 @@ exports.book_update_get = function (req, res, next) {
         err.status = 404;
         return next(err);
       }
-      // Success.
       // Mark our selected genres as checked.
       for (
         var all_g_iter = 0;
