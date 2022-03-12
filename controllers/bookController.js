@@ -187,7 +187,7 @@ exports.book_delete_get = (req, res, next) => {
     (err, results) => {
       if (err) next(err);
 
-      if (!results.book_instances === null) {
+      if (results.book === null) {
         // No book found
         res.redirect('/catalog/books');
       }
@@ -227,7 +227,7 @@ exports.book_delete_post = (req, res, next) => {
         });
         return;
       } else {
-        Book.findByIdAndDelete(req.body.bookid, (err) => {
+        Book.findByIdAndDelete(req.body.id, (err) => {
           if (err) next(err);
 
           res.redirect('/catalog/books');
