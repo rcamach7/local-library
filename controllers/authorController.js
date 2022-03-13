@@ -2,6 +2,7 @@ const Author = require('../models/author');
 var async = require('async');
 var Book = require('../models/book');
 const { body, validationResult } = require('express-validator');
+const author = require('../models/author');
 
 // Displays list of all authors
 exports.author_list = (req, res, next) => {
@@ -151,10 +152,80 @@ exports.author_delete_post = function (req, res, next) {
 
 // Display Author update form on GET.
 exports.author_update_get = function (req, res) {
-  res.send('NOT IMPLEMENTED: Author update GET');
+  Author.findById(req.params.id).exec((err, author) => {
+    if (err) next(err);
+
+    if (author === null) {
+      const error = new Error('Author not found');
+      error.status = 404;
+
+      return next(err);
+    }
+
+    res.render('author_form', {
+      title: 'Update Author Information',
+      author: author,
+    });
+  });
 };
 
 // Handle Author update on POST.
-exports.author_update_post = function (req, res) {
-  res.send('NOT IMPLEMENTED: Author update POST');
-};
+exports.author_update_post = [
+  body('first_name')
+    .trim()
+    .isLength({ min: 1 })
+    .escape()
+    .withMessage('First name must be specified')
+    .isAlphanumeric()
+    .withMessage('First name has non-alphanumeric characters'),
+  body('family_name')
+    .trim()
+    .isLength({ min: 1 })
+    .escape()
+    .withMessage('First name must be specified')
+    .isAlphanumeric()
+    .withMessage('First name has non-alphanumeric characters'),
+  body('date_of_birth', 'Invalid date of birth')
+    .optional({ checkFalsy: true })
+    .isISO8601()
+    .toDate(),
+  body('date_of_death', 'Invalid date of birth')
+    .optional({ checkFalsy: true })
+    .isISO8601()
+    .toDate(),
+  (req, res, next) => {
+    const errors = validationResult(req);
+
+    const updatedAuthor = new Author({
+      first_name: req.body.first_name,
+      family_name: req.body.family_name,
+      date_of_birth: req.body.date_of_birth,
+      date_of_death: req.body.date_of_death,
+      _id: req.params.id,
+    });
+
+    if (errors.isEmpty()) {
+      // Errors exist in the data provided
+      // We need to query the data again, and re provide it to the form page
+      Author.findById(req.params.id, (err, authorFound) => {
+        res.render('author_form', {
+          title: 'Update Author',
+          author: authorFound,
+          errors: errors.array(),
+        });
+      });
+    } else {
+      // Process updated data
+      Author.findByIdAndUpdate(
+        req.params.id,
+        updatedAuthor,
+        {},
+        (err, authorUpdated) => {
+          if (err) next(err);
+
+          res.redirect(authorUpdated.url);
+        }
+      );
+    }
+  },
+];

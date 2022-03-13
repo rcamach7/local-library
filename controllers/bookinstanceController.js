@@ -1,5 +1,6 @@
 const BookInstance = require('../models/bookinstance');
 var Book = require('../models/book');
+const async = require('async');
 const { body, validationResult } = require('express-validator');
 
 // Display list of all BookInstances.
@@ -126,11 +127,82 @@ exports.bookinstance_delete_post = function (req, res) {
 };
 
 // Display BookInstance update form on GET.
-exports.bookinstance_update_get = function (req, res) {
-  res.send('NOT IMPLEMENTED: BookInstance update GET');
+// Produce the BookInstance update page with the populated inputs based on the id passed in
+exports.bookinstance_update_get = function (req, res, next) {
+  async.parallel(
+    {
+      bookinstance: (callback) =>
+        BookInstance.findById(req.params.id).exec(callback),
+      book_list: (callback) => Book.find().exec(callback),
+    },
+    (err, results) => {
+      if (err) next(err);
+
+      res.render('bookinstance_form', {
+        title: 'Edit BookInstance',
+        bookinstance: results.bookinstance,
+        book_list: results.book_list,
+      });
+    }
+  );
 };
 
 // Handle bookinstance update on POST.
-exports.bookinstance_update_post = function (req, res) {
-  res.send('NOT IMPLEMENTED: BookInstance update POST');
-};
+exports.bookinstance_update_post = [
+  body('book', 'Book must be specified').trim().isLength({ min: 1 }).escape(),
+  body('imprint', 'Imprint must be specified')
+    .trim()
+    .isLength({ min: 1 })
+    .escape(),
+  body('status').escape(),
+  body('due_back', 'Invalid date')
+    .optional({ checkFalsy: true })
+    .isISO8601()
+    .toDate(),
+  (req, res, next) => {
+    const errors = validationResult(req);
+
+    const bookinstance = new BookInstance({
+      book: req.body.book,
+      imprint: req.body.imprint,
+      status: req.body.status,
+      due_back: req.body.due_back,
+      _id: req.params.id,
+    });
+
+    if (!errors.isEmpty()) {
+      // Errors exist in the data provided
+      // We need to query the data again, and re provide it to the form page
+      async.parallel(
+        {
+          bookinstance: (callback) =>
+            BookInstance.findById(req.params.id).exec(callback),
+          book_list: (callback) => Book.find().exec(callback),
+        },
+        (err, results) => {
+          if (err) next(err);
+
+          res.render('bookinstance_form', {
+            title: 'Update BookInstance',
+            bookinstance: bookinstance,
+            book_list: results.book_list,
+            errors: errors.array(),
+          });
+        }
+      );
+      return;
+    } else {
+      // Data passed validation, so process request
+      BookInstance.findByIdAndUpdate(
+        req.params.id,
+        bookinstance,
+        {},
+        (err, bookinstanceFound) => {
+          if (err) next(err);
+
+          res.redirect(bookinstanceFound.url);
+        }
+      );
+    }
+  },
+];
