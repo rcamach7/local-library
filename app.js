@@ -1,9 +1,12 @@
 var createError = require('http-errors');
 var express = require('express');
 var path = require('path');
+const mongoose = require('mongoose');
 var cookieParser = require('cookie-parser');
 var logger = require('morgan');
 var sassMiddleware = require('node-sass-middleware');
+const compression = require('compression');
+const helmet = require('helmet');
 
 var indexRouter = require('./routes/index');
 var usersRouter = require('./routes/users');
@@ -12,12 +15,10 @@ const catalogRouter = require('./routes/catalog');
 var app = express();
 
 // ! Set up mongoose connection
-const mongoose = require('mongoose');
-// Set up default mongoose connection
-const dev_url =
+const dev_db_url =
   'mongodb+srv://rcamach7:locallibrary@cluster0.j81qo.mongodb.net/local_library?retryWrites=true&w=majority';
-
-mongoose.connect(dev_url, { useNewUrlParser: true, useUnifiedTopology: true });
+const mongoDB = process.env.MONGODB_URI || dev_db_url;
+mongoose.connect(mongoDB, { useNewUrlParser: true, useUnifiedTopology: true });
 mongoose.Promise = global.Promise;
 // Get the default connection
 const db = mongoose.connection;
@@ -44,6 +45,8 @@ app.use(logger('dev'));
 app.use(express.json());
 app.use(express.urlencoded({ extended: false }));
 app.use(cookieParser());
+app.use(compression());
+app.use(helmet());
 app.use(express.static(path.join(__dirname, 'public')));
 
 // ! Define Routes
