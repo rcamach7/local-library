@@ -61,6 +61,3 @@ awesome_instance.save(function (err) {
 ### Asynchronous flow
 
 #### Credentials
-
-username: rcamach7
-ps: locallibrary
